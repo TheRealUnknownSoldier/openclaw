@@ -10,7 +10,7 @@ import {
 import { expect, it, vi } from "vitest";
 import { createStdioTransport } from "./transport-stdio.js";
 
-// Process registration has separate lifecycle coverage; this regression exercises real spawning.
+// mock-isolation: Keep this spawn regression out of the durable process registry; lifecycle coverage is separate.
 vi.mock("./transport-process-registration.js", () => ({
   prepareCodexAppServerProcessRegistration: async () => async () => {},
 }));

@@ -16,7 +16,6 @@ import {
 import { updateHumanMentions } from "../../../lib/chat/human-mentions.ts";
 import { clearCompositionEnd, recordCompositionEnd } from "../../../lib/ime.ts";
 import { isSessionRunVisuallyActive } from "../../../lib/session-run-state.ts";
-import { detectTextDirection } from "../../../lib/text-direction.ts";
 import { chatGoalCreationObjective } from "../chat-goals.ts";
 import {
   hasTerminalRunStatus,
@@ -346,7 +345,6 @@ export function createChatComposerContext(
   const syncComposerValue = (target: HTMLTextAreaElement, typedAtSign = false) => {
     prediction?.dismiss();
     adjustTextareaHeight(target, { nativeInput: true });
-    target.dir = detectTextDirection(target.value);
     const mentions = getMentions();
     commitComposerDraft(
       props,

@@ -1,0 +1,2 @@
+# Native composer editing must not notify attribute observers when text direction is unchanged.
+32

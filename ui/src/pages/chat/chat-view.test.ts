@@ -56,13 +56,11 @@ import {
   keydownComposer,
   createReactiveDraftHarness,
   createSlashRerenderHarness,
-  createChatProps,
   createReplyPane,
   createPasteEvent,
   createTestTranscript,
   disposeChatView,
   renderChatInto,
-  renderChatPropsInto,
   renderChatView,
   getComposerTextarea,
   requireElement,
@@ -1672,38 +1670,32 @@ describe("chat voice controls", () => {
 
 describe("chat composer render invalidation", () => {
   it("keeps steady ordinary edits and direction changes local", () => {
-    const container = createComposerContainer();
     let draft = "a";
     const onDraftChange = vi.fn((next: string) => {
       draft = next;
     });
-    const props = createChatProps({
-      draft,
+    const { container, renderCurrent } = createReactiveDraftHarness({
       getDraft: () => draft,
       onDraftChange,
     });
-    renderChatPropsInto(container, props);
 
     const textarea = getComposerTextarea(container);
     vi.mocked(chatThread.buildCachedChatItems).mockClear();
 
-    textarea.value = "ab";
-    textarea.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText" }));
-    textarea.value = "abc";
-    textarea.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText" }));
+    inputDraftAtEnd(container, "ab");
+    inputDraftAtEnd(container, "abc");
 
     expect(draft).toBe("abc");
     expect(getComposerTextarea(container)).toBe(textarea);
     expect(chatThread.buildCachedChatItems).not.toHaveBeenCalled();
 
-    textarea.value = "1. مرحبا";
-    textarea.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText" }));
+    inputDraftAtEnd(container, "1. مرحبا");
 
     expect(getComposerTextarea(container)).toBe(textarea);
     expect(chatThread.buildCachedChatItems).not.toHaveBeenCalled();
     expect(textarea.dir).toBe("rtl");
 
-    renderChatPropsInto(container, props);
+    renderCurrent();
     expect(getComposerTextarea(container).dir).toBe("rtl");
   });
 });

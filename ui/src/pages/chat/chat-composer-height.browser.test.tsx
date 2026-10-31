@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, onTestFinished } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 import {
   createComposerContainer,
   createComposerProps,
@@ -71,6 +71,38 @@ describe("content-sized composer height", () => {
       input: () => container.querySelector<HTMLElement>(".agent-chat__input")!,
     };
   }
+
+  it.each([
+    { draft: "Hello", direction: "ltr", replacement: "שלום", nextDirection: "rtl" },
+    { draft: "שלום", direction: "rtl", replacement: "Hello", nextDirection: "ltr" },
+  ])("does not mutate unchanged text direction during $direction edits", async (sample) => {
+    const f = fixture();
+    f.props.draft = sample.draft;
+    f.draw();
+    await settled();
+    const editor = f.editor();
+    const input = page.elementLocator(editor);
+    await input.click();
+    editor.setSelectionRange(editor.value.length, editor.value.length);
+    await settled();
+    const mutations: MutationRecord[] = [];
+    const observer = new MutationObserver((records) => mutations.push(...records));
+    observer.observe(editor, { attributes: true, attributeFilter: ["dir"] });
+    onTestFinished(() => observer.disconnect());
+
+    await userEvent.type(input, "abcdef");
+    await userEvent.keyboard("{Backspace}{Backspace}");
+    await settled();
+    expect(editor.value).toBe(`${sample.draft}abcd`);
+    expect(editor.dir).toBe(sample.direction);
+    expect(mutations).toHaveLength(0);
+
+    await input.fill(sample.replacement);
+    await settled();
+    expect(editor.dir).toBe(sample.nextDirection);
+    expect(editor.value).toBe(sample.replacement);
+    expect(f.editor()).toBe(editor);
+  });
 
   it.each([1440, 1600])(
     "grows beyond six lines, caps the whole footer, and shrinks at %ipx",
